@@ -1,0 +1,67 @@
+---
+title: CRUD Operations
+---
+
+Monarch ORM provides a fluent API for performing CRUD (Create, Read, Update, Delete) operations on your MongoDB collections.
+
+## Inserting Documents
+
+```typescript
+const newUser = await collections.users
+  .insertOne({
+    name: "Alice",
+    age: 30,
+    isActive: true,
+  })
+  .exec();
+```
+
+## Querying Documents
+
+```typescript
+const users = await collections.users.find({ age: { $gt: 25 } }).exec(); // Find users older than 25
+const user = await collections.users.findOne({ name: "Alice" }).exec();
+```
+
+## Updating Documents
+
+```typescript
+const updatedUser = await collections.users
+  .updateOne({ name: "Alice" }, { $set: { isActive: false } })
+  .exec();
+```
+
+## Deleting Documents
+
+```typescript
+const deletedUser = await collections.users.deleteOne({ name: "Alice" }).exec();
+```
+
+## Bulk operations
+
+```typescript
+const bulkWriteResult = await collections.users
+  .bulkWrite([
+    {
+      insertOne: {
+        document: {
+          name: "bulk1",
+          email: "bulk1@gmail.com",
+          age: 22,
+          isVerified: false,
+        },
+      },
+    },
+    {
+      insertOne: {
+        document: {
+          name: "bulk2",
+          email: "bulk2@gmail.com",
+          age: 23,
+          isVerified: true,
+        },
+      },
+    },
+  ])
+  .exec()
+```

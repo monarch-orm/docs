@@ -1,0 +1,79 @@
+---
+title: Schema Indexes
+---
+
+When defining schema options, one important aspect to consider is the use of indexes. 
+Indexes can significantly improve the performance of queries by allowing the database to quickly locate and access the data.
+For example, you can create unique indexes to ensure that certain fields, like usernames, are not duplicated across your collection. 
+
+Monarch ORM allows you to define indexes directly within your schema definition, ensuring that the necessary indexes are created automatically when the collection is created.
+
+## Benefits of Using Indexes
+
+*   **Improved Query Performance:** Dramatically speeds up query execution by reducing the amount of data that MongoDB needs to scan.
+*   **Enforced Uniqueness:**  You can create unique indexes to ensure that certain fields have unique values across all documents in the collection.
+*   **Optimized Sorting:** Indexes can improve the performance of sort operations.
+
+## Defining Indexes
+
+You define indexes for your schema using the `indexes` method in the `createSchema` API. This method accepts a function which is called with a `createIndex` and a `unique` factory, which provide a type-safe way of specifying your indexes.
+
+```typescript
+import { createSchema, string, number } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  username: string(),
+  email: string(),
+  age: number(),
+  firstName: string(),
+  lastName: string(),
+}).indexes(({ createIndex, unique }) => ({
+  usernameIndex: unique("username"),
+  emailIndex: createIndex({ email: 1 }, { unique: true }),
+  ageIndex: createIndex({ age: -1 }),
+  nameIndex: createIndex({ firstName: 1, lastName: 1 }),
+}));
+```
+
+**Explanation:**
+
+*   `indexes(({ createIndex, unique }) => ({ ... }))`:  This method configures the indexes for the schema.  It receives an object with `createIndex` and `unique` functions to define indexes in a type-safe way.  You define the indexes to be created within the method's return block.
+
+*   **`unique(field)`**: Creates a unique index on the specified field.
+    *    `usernameIndex: unique("username")` Will add an index to the collection that does not allow for duplicate usernames
+
+*   **`createIndex(keys, options)`**: Creates an index with the specified keys and options.
+    *   **`keys`**: An object specifying the index keys and their sort order (1 for ascending, -1 for descending).
+    *   **`options`**: An object specifying the index options (e.g., `unique`, `sparse`, `name`).
+
+## Index Types and Options
+
+*   **Single Field Indexes**: Add an index on a single field to reduce processing time when querying. Use `1` to specify ascending, `-1` for descending.
+    ```typescript
+       ageIndex: createIndex({ age: -1 }),
+    ```
+*   **Compound Indexes**: Use a compound index when queries filter on multiple properties at once.
+    ```typescript
+       nameIndex: createIndex({ firstName: 1, lastName: 1 }),
+    ```
+
+*   **Unique Indexes**: Reject documents with duplicate keys on properties specified in the `unique` option.
+    ```typescript
+       emailIndex: createIndex({ email: 1 }, { unique: true }),
+    ```
+
+*   **Other Index Options**: MongoDB supports a variety of other index options. See [MongoDB's Index documentation](https://www.mongodb.com/docs/manual/indexes/) for more details. These options can be passed in the `options` parameter of the `createIndex` function:
+    *   `name`: Specifies a name for the index.
+    *   `sparse`: Only indexes documents that contain the indexed field.
+    *   `expireAfterSeconds`: Specifies a TTL (Time-To-Live) for documents in the collection.
+    *   `collation`: Allows specifying language-specific rules for string comparison.
+    *    ...and more.
+
+## Important Considerations
+
+*   **Index Selection:** MongoDB automatically selects the best index to use for a given query. However, you can use the `hint()` method on your queries to force MongoDB to use a specific index.
+*   **Index Size:** Indexes consume storage space. Avoid creating unnecessary indexes.
+*   **Index Maintenance:** MongoDB automatically maintains indexes as documents are inserted, updated, and deleted. However, index rebuilds can be time-consuming.
+*   **Cardinality:** Use indexes on fields with high cardinality (i.e., a large number of distinct values) for best performance.
+
+By understanding how to define and use indexes in Monarch ORM, you can significantly improve the performance of your MongoDB applications.

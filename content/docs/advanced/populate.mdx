@@ -1,0 +1,273 @@
+---
+title: Populate
+---
+
+Population is a powerful feature in Monarch ORM that allows you to replace foreign key references in your documents with the actual related documents from other collections. This is especially useful for retrieving related data in a single query, avoiding multiple database round trips.
+
+## Basic Population
+
+The simplest way to populate a relation is to pass `true` as the population option. This will replace the foreign key field with the related document(s).
+
+```typescript
+import { createClient, createDatabase, createSchema, objectId, string } from "monarch-orm";
+
+// Define schemas
+const PostSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const UserSchema = createSchema("users", {
+  name: string(),
+})
+.relations(({ one }) => ({
+    posts: one(PostSchema, "authorId"),
+  }));
+
+
+// Connect to the database and get collections
+const client = createClient("mongodb://localhost:27017/your-db");
+const { collections } = createDatabase(client.db(), {
+  users: UserSchema,
+  posts: PostSchema,
+});
+
+async function example() {
+    // Insert some data
+    const user = await collections.users.insertOne({ name: "John Doe" }).exec();
+    const post = await collections.posts.insertOne({ title: "Hello World", authorId: user._id }).exec();
+
+
+    // Populate the 'posts' relation on a user document
+    const userWithPosts = await collections.users
+      .findOne({ _id: user._id })
+      .populate({ posts: true })
+      .exec();
+
+    console.log(userWithPosts);
+    // Expected output:
+    // {
+    //   _id: ObjectId("..."),
+    //   name: "John Doe",
+    //   posts: {
+    //     _id: ObjectId("..."),
+    //     title: "Hello World",
+    //     authorId: ObjectId("...")
+    //   }
+    // }
+}
+```
+
+## Population Options
+
+To control the behavior of the population process, you can pass an object with various options to the `populate` method. These options allow you to customize which documents are retrieved, how they are sorted, and which fields are included or excluded.
+
+### 1. `limit`: Limiting the Number of Populated Documents
+
+The `limit` option restricts the number of documents returned for a one-to-many or reference relationship.
+
+```typescript
+const userWithLimitedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      limit: 5,
+    },
+  })
+  .exec();
+```
+
+This will populate the `posts` relation with a maximum of 5 `Post` documents.
+
+### 2. `skip`: Skipping a Number of Populated Documents
+
+The `skip` option skips a specified number of documents before starting to populate the relation. This can be useful for pagination or retrieving a specific subset of related documents.
+
+```typescript
+const userWithSkippedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      skip: 10,
+      limit: 5,
+    },
+  })
+  .exec();
+```
+
+This will skip the first 10 `Post` documents and then populate the `posts` relation with a maximum of 5 documents.
+
+### 3. `sort`: Sorting Populated Documents
+
+The `sort` option allows you to specify the sorting order for the populated documents. This can be useful for ensuring that the related documents are returned in a specific order.
+
+```typescript
+const userWithSortedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      sort: { createdAt: -1 }, // Sort by createdAt in descending order
+    },
+  })
+  .exec();
+```
+
+This will sort the `Post` documents by the `createdAt` field in descending order before populating the `posts` relation.  Use `"asc"` or `1` for ascending order, `"desc"` or `-1` for descending.
+
+### 4. `select`: Including Specific Fields
+
+The `select` option lets you specify which fields to include in the populated documents. This can reduce the amount of data transferred and improve performance.
+
+```typescript
+const userWithSelectedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      select: { title: true, contents: true }, // Include only the title and contents fields
+    },
+  })
+  .exec();
+```
+
+This will populate the `posts` relation with `Post` documents that only include the `title` and `contents` fields.
+
+### 5. `omit`: Excluding Specific Fields
+
+The `omit` option lets you specify which fields to exclude in the populated documents. This is the inverse of the `select` option.
+
+```typescript
+const userWithOmittedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      omit: { secret: true }, // Exclude the secret field
+    },
+  })
+  .exec();
+```
+
+This will populate the `posts` relation with `Post` documents that exclude the `secret` field.
+
+## Combining Population Options
+
+You can combine multiple population options to achieve fine-grained control over the population process.
+
+```typescript
+const userWithCustomizedPosts = await collections.users
+  .findOne({ _id: someUserId })
+  .populate({
+    posts: {
+      limit: 5,
+      sort: { createdAt: -1 },
+      select: { title: true, contents: true },
+      omit: { authorId: true },
+    },
+  })
+  .exec();
+```
+
+This will:
+
+1.  Populate the `posts` relation with a maximum of 5 `Post` documents.
+2.  Sort the `Post` documents by the `createdAt` field in descending order.
+3.  Include only the `title` and `contents` fields.
+4.  Exclude the `authorId` field.
+
+## Nested Population
+
+Monarch ORM now supports nested population, enabling you to populate relations of related documents within a single query. You can achieve this by passing another `populate` object as a parameter to a relation's `populate` function. This offers a more efficient approach to retrieving deeply nested data.
+
+```typescript
+import { boolean, createClient, createDatabase, createSchema, number, objectId, string } from "monarch-orm";
+
+const CommentSchema = createSchema("comments", {
+    text: string(),
+    postId: objectId(),
+    authorId: objectId()
+});
+
+const PostSchema = createSchema("posts", {
+    title: string(),
+    content: string(),
+    authorId: objectId(),
+  })
+  .relations(({ many, one }) => ({
+    comments: many(CommentSchema, "postId"),
+    author: one(UserSchema, "_id")
+  }));
+
+const UserSchema = createSchema("users", {
+    name: string(),
+  })
+  .relations(({ one }) => ({
+    posts: one(PostSchema, "authorId"),
+  }));
+
+// Example Usage:
+const client = createClient("mongodb://localhost:27017/your-db");
+const { collections } = createDatabase(client.db(), { users: UserSchema, posts: PostSchema, comments: CommentSchema });
+
+async function nestedPopulationExample() {
+    const user = await collections.users.insertOne({ name: "John" });
+    const post = await collections.posts.insertOne({ title: "My Post", content: "...", authorId: user._id });
+    const comment = await collections.comments.insertOne({ postId: post._id, text: "Nice", authorId: user._id});
+
+    const postWithAuthorAndComments = await collections.posts.findOne({_id: post._id})
+        .populate({
+            author: true,
+            comments: {
+                populate: {
+                    author: true
+                }
+            }
+        })
+        .exec()
+
+    console.log(postWithAuthorAndComments);
+    // Output will contain:
+    // {
+    //    ...,
+    //    author: { _id: ObjectId(), name: "John" },
+    //    comments: [
+    //        {
+    //            ...,
+    //            author: { _id: ObjectId(), name: "John" }
+    //        }
+    //    ]
+    //}
+
+    // Example Usage 2: Select Fields on Nested Population
+    const postWithAuthorAndComments2 = await collections.posts.findOne({_id: post._id})
+    .populate({
+        author: { select: { name: true } },
+        comments: {
+            populate: {
+                author: { select: {name: true} }
+            }
+        }
+    })
+    .exec()
+
+    console.log(postWithAuthorAndComments2);
+    // Output will contain:
+    // {
+    //    ...,
+    //    author: { _id: ObjectId(), name: "John" }, // Other User properties will be missing
+    //    comments: [
+    //        {
+    //            ...,
+    //            author: { _id: ObjectId(), name: "John" }  // Other User properties will be missing
+    //        }
+    //    ]
+    //}
+}
+```
+
+In this setup the comment author is now also populated
+
+## Important Considerations
+
+*   **Performance:** Population can be expensive, especially for large datasets or complex relationships. Consider using projections (`select` and `omit`) to reduce the amount of data transferred.
+*   **Schema Design:** A well-designed schema with appropriate indexing can improve the performance of population operations.
+
+Population offers a convenient way to retrieve related data in Monarch ORM. By understanding the various population options, you can tailor the population process to your specific needs and optimize performance. Now supports nested population!

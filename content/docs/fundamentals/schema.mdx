@@ -1,0 +1,62 @@
+---
+title: Schema
+---
+
+## What is a Schema?
+
+A schema is like a blueprint for your data. It defines the structure and rules for the data that will be stored in your database. 
+Think of it as a recipe in a cookbook. 
+Just as a recipe specifies the ingredients and steps needed to create a dish, a schema specifies the fields and data types required for your database entries.
+
+For example, if you have a schema for a "User" in your application, it might define that each user should have a name (as a string), an email (as a string), and an age (as a number). 
+This ensures that all user data follows the same structure, making it easier to manage and query the database.
+
+
+## Creating a Schema
+
+Creating a schema involves defining the structure and rules for the data that will be stored in your database.
+This includes specifying the fields, their data types, and any additional constraints or relationships between different schemas.
+
+Let's start with a simple example of creating a schema for a "User" collection. 
+This schema will define that each user should have a name (as a string) and an email (as a string).
+
+```typescript
+import { string, createSchema } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  name: string(),
+  email: string(),
+});
+```
+
+## Available Schema Types
+
+Here are the available schema types you can use:
+
+- `string()`: Represents a string value.
+- `number()`: Represents a numeric value.
+- `boolean()`: Represents a boolean value.
+- `date()`: Represents a JavaScript Date object.
+- `dateString()`: Represents date strings in ISO format.
+- `objectId()`: Represents a MongoDB ObjectId.
+- `array(type)`: Represents an array of the specified type.
+- `object(schema)`: Represents a nested object with a defined schema.
+- `record(type)`: Represents a flexible object with string keys and values of the specified type.
+- `tuple([type1, type2, ...])`: Represents a tuple (array with a fixed number of elements of specific types).
+- `literal(...values)`: Represents a field that can only accept one of the specified literal values (similar to an enum).
+- `taggedUnion({[tagName: string]: object({...})})`: Represents a field which contains an object distinguished by a common tag.
+- `union(type1, type2, ...)`: Represents a field that can accept multiple different types.
+- `pipe(type1, type2)`: Chains two types together, applying the transformations and validations of both.
+- `mixed()`: Represents a field that can accept any type of value. Use sparingly.
+- `type(parser, updater?)`: The base type constructor. Allows you to create custom types with custom parsing and update logic. *Should be used with extreme care*
+
+For more details, check out the [Schema Types Documentation](/docs/fundamentals/types).
+
+
+## Default Id
+
+When you create a schema using `monarch-orm`, an `_id` field is automatically added to each document in your collection.
+This field serves as a unique identifier for each entry, ensuring that every record can be distinctly referenced. 
+The `_id` field is crucial for operations such as querying, updating, and deleting documents, as it allows you to efficiently manage and interact with your data.
+
+

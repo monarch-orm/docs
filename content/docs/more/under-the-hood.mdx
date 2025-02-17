@@ -1,0 +1,43 @@
+---
+title: Under The Hood
+description: Explore the inner workings of Monarch ORM and how it simplifies MongoDB interactions
+---
+
+
+Monarch ORM is designed to be a powerful yet lightweight wrapper around MongoDB, providing developers with enhanced functionality while maintaining a minimal dependency footprint. Let's explore how Monarch ORM works under the hood and how it simplifies the development process.
+
+## MongoDB as the Core Dependency
+
+At its core, Monarch ORM relies solely on MongoDB as its primary dependency. This deliberate choice ensures that the library remains lean and focused, avoiding unnecessary bloat and potential conflicts with other dependencies in your project.
+
+## Wrapping MongoDB's APIs
+
+Monarch ORM acts as a sophisticated wrapper around MongoDB's native APIs. This approach allows us to leverage the full power of MongoDB while adding several layers of functionality that enhance the developer experience:
+
+1. **Type Safety**: By utilizing TypeScript, Monarch ORM provides robust type checking for your database operations. This helps catch potential errors at compile-time, reducing runtime issues and improving overall code quality.
+
+2. **Schema Validation**: Monarch ORM implements a schema validation layer that ensures data integrity before it reaches the database. This validation occurs on the application level, allowing for more detailed error messages and potentially reducing unnecessary database calls.
+
+3. **Hooks**: The ORM introduces a powerful hook system that allows developers to execute custom logic before and after database operations. This feature is particularly useful for tasks like data transformation, logging, or triggering side effects.
+
+4. **Query Building**: Monarch ORM provides an intuitive query building interface that abstracts away some of the complexities of MongoDB's query language while still allowing for advanced querying capabilities.
+
+5. **Relationship Handling**: While MongoDB is a document-based database, Monarch ORM introduces conventions and helper methods to manage relationships between documents, making it easier to work with connected data.
+
+## Reducing the Learning Curve
+
+One of the key benefits of Monarch ORM's wrapper approach is the significant reduction in the learning curve for developers:
+
+**Familiar Patterns**: By providing an interface that follows common patterns in the MongoDB/JavaScript Ecosystem, developers who have experience with other ODMs/ORMs can quickly adapt to Monarch ORM.
+
+**Abstraction of Complexity**: The wrapper abstracts away some of the more complex aspects of MongoDB's API, allowing developers to focus on their application logic rather than database intricacies.
+   
+**Type Hints and Autocompletion**: The TypeScript integration not only provides type safety but also enables better IDE support with autocompletion and inline documentation.
+
+## Performance Considerations
+
+By acting as a thin layer over MongoDB's APIs, Monarch ORM aims to add minimal overhead to your database operations. The additional features are designed to be as lightweight as possible, ensuring that you get the benefits of enhanced functionality without sacrificing performance.
+
+## Extensibility
+
+The architecture of Monarch ORM is designed with extensibility in mind. Developers can easily extend the base functionality to add custom methods, validators, or even entire plugins that integrate seamlessly with the existing ORM structure.

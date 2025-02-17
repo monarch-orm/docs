@@ -1,0 +1,78 @@
+---
+title: Relations
+---
+
+Relations allow you to define how different schemas are connected to each other.
+By establishing relationships, you can easily manage and query related data across different collections.
+There are three main types of relations:
+
+1. **one()**: This relation is used to define a one-to-one relationship between two schemas. 
+   For example, in the User schema, a user can have one tutor, which is another user. 
+   This is defined using the `one()` function, allowing you to easily navigate to the related user.
+
+2. **many()**: This relation is used to define a one-to-many relationship. 
+   In the Post schema, a user can be an author of many posts. 
+   This is represented using the `many()` function, which allows you to retrieve all posts associated with a user.
+
+3. **ref()**: This relation is used to create a reference to another schema. 
+   In the User schema, the posts field references the Post schema, indicating that the posts are related to the user through the author field. 
+   The `ref()` function helps in establishing this connection, enabling efficient data retrieval across schemas.
+
+Understanding these relationships is crucial for structuring your data models effectively and ensuring smooth interactions between them.
+
+
+### Using one()
+
+```typescript
+import { createSchema, string, objectId } from "monarch-orm";
+
+const PostSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const UserSchema = createSchema("users", {
+  name: string(),
+})
+.relations(({ one }) => ({
+    posts: one(PostSchema, "authorId"),
+  }));
+```
+
+### Using many()
+
+```typescript
+import { createSchema, string, objectId } from "monarch-orm";
+
+const CommentSchema = createSchema("comments", {
+  comment: string(),
+  postId: objectId(),
+});
+
+const PostSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+})
+.relations(({ many }) => ({
+    comments: many(CommentSchema, "postId"),
+  }));
+```
+
+### Using ref()
+
+```typescript
+import { createSchema, string, objectId } from "monarch-orm";
+
+const PostSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const UserSchema = createSchema("users", {
+  name: string(),
+  postId: objectId()
+})
+.relations(({ ref }) => ({
+    posts: ref(PostSchema, "postId", "_id"),
+  }));
+```

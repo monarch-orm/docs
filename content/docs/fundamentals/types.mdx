@@ -1,0 +1,379 @@
+---
+title: Schema Types
+description: Let's explore the various schema types available for structuring your data effectively. Understanding these types is crucial for defining the shape and constraints of your data models. Each type serves a specific purpose and comes with its own set of modifiers that enhance its functionality. Whether you're working with strings, numbers, or booleans, this guide will provide you with the necessary insights to utilize these types to their fullest potential.
+---
+
+
+
+
+
+
+## Primitives
+
+### String - string()
+
+Defines a field that accepts string values. The string type is ideal for storing text data such as names, descriptions, emails, and any other textual information. It supports Unicode characters and can handle text of any length (within MongoDB's document size limits).
+
+```typescript
+import { string, createSchema } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  name: string().required(),
+});
+```
+
+The string type has the following modifiers: 
+ - `.lowercase()`: Transforms the value to lowercase before storing, useful for ensuring consistent data storage (e.g., email addresses).
+ - `.uppercase()`: Transforms the value to uppercase before storing, commonly used for codes or identifiers.
+
+```typescript
+import { string, createSchema } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  email: string().lowercase(), // Ensures consistent email storage
+  referralCode: string().uppercase(), // Standardizes referral codes
+});
+```
+
+### Number - number()
+
+Defines a field that accepts numeric values. The number type can store both integer and floating-point values, making it versatile for various numeric data such as quantities, measurements, prices, and calculations. It supports the full range of JavaScript's number type, including scientific notation.
+
+```typescript
+import { number, createSchema } from "monarch-orm";
+
+const ProductSchema = createSchema("products", {
+  price: number().required(), // Store prices with decimal points
+  quantity: number().default(0), // Track inventory with a default value
+  rating: number().optional(), // Optional product rating
+});
+```
+
+### Boolean - boolean()
+
+Defines a field that accepts boolean values (true or false). Boolean fields are perfect for storing flags, toggles, or any binary state in your data model. They're commonly used for user preferences, feature flags, or status indicators.
+
+```typescript
+const UserSchema = createSchema("users", {
+  isVerified: boolean().default(false), // User verification status
+  isActive: boolean().required(), // Account status
+  emailNotifications: boolean().default(true), // Notification preferences
+});
+```
+
+
+
+## Dates
+
+
+### Date - date()
+
+Defines a field that accepts JavaScript Date objects. The date type stores timestamps with millisecond precision and handles timezone information. It's ideal for tracking events, timestamps, and temporal data where you need to perform date-based calculations or comparisons.
+
+```typescript
+const UserSchema = createSchema("users", {
+  birthDate: date().required(), // Store user's birth date
+  lastLogin: date().default(() => new Date()), // Track last login with current timestamp
+  accountExpiry: date().optional(), // Optional account expiration date
+});
+```
+
+### Date String - dateString()
+Defines a field that accepts date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ). This type is useful when you need to work with date strings directly or when integrating with APIs that expect ISO format dates. It ensures consistent date string formatting across your application.
+
+```typescript
+const EventSchema = createSchema("events", {
+  startDate: dateString().required(), // Event start date in ISO format
+  endDate: dateString().required(), // Event end date in ISO format
+  createdAt: dateString().default(() => new Date().toISOString()), // Current timestamp in ISO format
+});
+```
+
+## ObjectId
+
+The `objectId()` type represents MongoDB's unique identifier format. This type is commonly used for document IDs and establishing relationships between collections by referencing documents.
+
+```typescript
+const PostSchema = createSchema("post", {
+  author: objectId()
+});
+```
+
+## Arrays
+
+The `array()` type allows you to define fields that contain ordered lists of values, all of the same type. This is useful when you need to store multiple values of the same type in a single field.
+
+```typescript
+ 
+// For Example
+const ResultSchema = object({
+  name: string(),
+  scores: array(number()),
+});
+
+// extract the inferred type like this
+type Result = InferSchemaInput<typeof ResultSchema>;
+
+// equivalent to:
+type Result = {
+  name: string;
+  scores: number[];
+};
+```
+
+## Mixed
+
+The `mixed()` type represents a field that can accept any type of value. This type should be used sparingly as it bypasses TypeScript's type checking, making your schema less type-safe. Consider using it only when dealing with truly dynamic or unknown data structures.
+
+```typescript - mixed()
+import { createSchema, mixed } from "monarch-orm";
+
+const SiteSchema = createSchema("site", {
+  metadata: mixed(), // Can be anything: string, number, object, array
+});
+
+// Equivalent TypeScript type:
+// type Example = { metadata: any; }
+```
+
+## Literals
+
+
+The `literal()` type allows you to define a schema with fixed possible values, similar to enums in TypeScript. This is useful for enforcing specific, predefined values for a field.
+
+```typescript
+  const UserRoleSchema = createSchema("userRoles", {
+  role: literal("admin", "moderator", "customer"),
+});
+
+const user = {
+  role: "admin", // Valid
+};
+
+// Invalid example will throw a type error
+const invalidUser = {
+  role: "guest", // Error: Type '"guest"' is not assignable to type '"admin" | "moderator" | "customer"'
+};
+
+```
+
+## Objects
+
+The `object()` type allows you to define nested structures within your schema. This is essential for organizing related data into logical groups and creating complex data models. Objects can contain any other valid schema type as their properties.
+
+```typescript
+ 
+// all properties are required by default
+const UserSchema = createSchema("user", {
+  bio: object({
+    name: string(),
+    age: number(),
+  })
+});
+
+// extract the inferred type like this
+type User = InferSchemaInput<typeof UserSchema>;
+
+// equivalent to:
+type User = {
+  bio: {
+    name: string;
+    age: number;
+  }
+};
+```
+
+## Records
+
+The `record()` type enables you to create dynamic key-value pairs where all values must be of the same type. This is particularly useful when you need to store a collection of related items with arbitrary keys but consistent value types.
+
+```typescript
+ 
+// Define the User schema with a record for grades
+const UserSchema = createSchema("users", {
+  name: string().required(),
+  email: string().required(),
+  grades: record(number()), // Each subject will have a numeric grade
+});
+
+
+// Example of inserting a user with grades
+const { collections } = createDatabase(client, {
+  users: UserSchema,
+});
+
+// Inserting a new user with grades for different subjects
+const newUser = await collections.users
+  .insert()
+  .values({
+    name: "Alice",
+    email: "alice@example.com",
+    grades: {
+      math: 90,
+      science: 85,
+      history: 88,
+    },
+  })
+  .exec();
+
+// Querying the user to retrieve grades
+const user = await collections.users.findOne().where({ email: "alice@example.com" }).exec();
+console.log(user.grades); 
+// Output: { math: 90, science: 85, history: 88 }
+```
+
+## Tuples
+
+The `tuple()` type allows you to define arrays with a fixed number of elements where each element can have a different type. This is particularly useful when you need to represent data that always comes in a specific format, such as coordinates or key-value pairs with different types.
+
+```typescript
+ 
+// all properties are required by default
+const ControlSchema = object({
+  location: tuple([number(), number()]),
+});
+
+// extract the inferred type like this
+type Control = InferSchemaInput<typeof ControlSchema>;
+
+// equivalent to:
+type Control = {
+  location: [number, number];
+};
+```
+
+## Tagged Union
+
+The `taggedUnion()` type provides a way to represent discriminated unions in your schema, where different variants of a type are distinguished by a tag field. This is ideal for modeling data that can take multiple forms but needs to be handled differently based on its type.
+
+```typescript - taggedUnion()
+
+// You need:
+// - a tag: A string identifying the type
+// value: An object containing specific fields for that type.
+
+const NotificationSchema = createSchema("notifications", {
+  notification: taggedUnion({
+    email: object({
+      subject: string(),
+      body: string(),
+    }),
+    sms: object({
+      phoneNumber: string(),
+      message: string(),
+    }),
+    push: object({
+      title: string(),
+      content: string(),
+    }),
+  }),
+});
+
+const notification = ;
+await collections.notifications.insert().values({ notification: {
+  tag: "email",
+  value: {
+    subject: "Welcome!",
+    body: "Thank you for joining us.",
+  },
+} }).exec();
+```
+
+## Union
+
+The `union()` type allows you to define fields that can accept multiple different types. Unlike tagged unions, regular unions don't require a discriminator field and are useful when you need to accept different types of values without explicitly tracking which type is being used.
+
+```typescript
+const NotificationSchema = createSchema("notifications", {
+  notification: union(object({
+      subject: string(),
+      body: string(),
+    }),
+    object({
+      phoneNumber: string(),
+      message: string(),
+    }),
+   ),
+});
+
+const notification = ;
+await collections.notifications.insert().values({ notification: {
+  tag: "email",
+  value: {
+    subject: "Welcome!",
+    body: "Thank you for joining us.",
+  },
+} }).exec();
+```
+
+## Custom Type
+
+The `type()` function enables you to create your own custom schema types with specialized validation and transformation logic. This is invaluable when you need to enforce specific data formats or business rules that aren't covered by the built-in types.
+
+```typescript - type()
+import { createSchema, type } from "monarch-orm";
+
+const HexColor = type<string, string>((input) => {
+    if (!/^#[0-9A-Fa-f]{6}$/i.test(input)) {
+        throw new Error("Invalid hex color format");
+    }
+    return input;
+});
+
+const ExampleSchema = createSchema("example", {
+    color: HexColor
+})
+
+// Equivalent TypeScript type:
+// type Example = { color: string; }
+```
+
+
+## Type Chaining
+
+The `pipe()` function is a powerful utility that allows you to chain multiple types together, applying their transformations and validations in sequence. This is particularly useful when you need to perform multiple transformations on a single field, such as converting a string input to a number.
+
+```typescript - pipe()
+import { createSchema, string, number, pipe } from "monarch-orm";
+
+const ExampleSchema = createSchema("example", {
+  count: pipe(
+    string(),
+    number()
+  ),
+});
+
+// Equivalent TypeScript type:
+// type Example = { count: number; }
+```
+
+
+## General Modifiers
+
+These modifiers can be applied to any field type to enhance their functionality and provide more flexibility in how data is handled:
+
+ - `.nullable()`: Allows the field to accept null values. This is useful when you need to explicitly represent the absence of a value, different from an undefined or omitted field.
+   ```typescript
+   const UserSchema = createSchema("users", {
+     middleName: string().nullable(), // Can be null for users without a middle name
+     deletedAt: date().nullable(), // Null until the user is deleted
+   });
+   ```
+
+ - `.default()`: Sets a default value if none is provided. You can specify a static value or a function that generates the default value.
+   ```typescript
+   const PostSchema = createSchema("posts", {
+     status: string().default("draft"), // Static default
+     createdAt: date().default(() => new Date()), // Dynamic default
+     viewCount: number().default(0), // Initialize counter
+   });
+   ```
+
+ - `.optional()`: Makes the field optional, allowing it to be omitted when creating or updating documents. This is different from nullable() as an optional field doesn't need to be specified at all.
+   ```typescript
+   const ProfileSchema = createSchema("profiles", {
+     bio: string().optional(), // Bio can be omitted
+     website: string().optional(), // Website URL is not required
+     phone: string().optional(), // Phone number is optional
+   });
+   ```

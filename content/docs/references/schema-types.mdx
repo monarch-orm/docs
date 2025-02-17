@@ -1,0 +1,226 @@
+---
+title: Schema Types API Reference
+description: Complete reference documentation for all schema types, their methods, and modifiers available in Monarch ORM.
+---
+
+## Primitive Types
+
+### string()
+
+Creates a string type field with optional modifiers.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+- `lowercase()`: Converts value to lowercase
+- `uppercase()`: Converts value to uppercase
+
+```typescript
+const schema = createSchema("example", {
+  email: string().lowercase().required(),
+  name: string().default("Anonymous")
+});
+```
+
+### number()
+
+Creates a numeric type field.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+
+```typescript
+const schema = createSchema("example", {
+  age: number().nullable(),
+  score: number().default(0)
+});
+```
+
+### boolean()
+
+Creates a boolean type field.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+
+```typescript
+const schema = createSchema("example", {
+  isActive: boolean().default(true),
+  isVerified: boolean().required()
+});
+```
+
+## Complex Types
+
+### date()
+
+Creates a Date object field.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+
+```typescript
+const schema = createSchema("example", {
+  createdAt: date().default(() => new Date()),
+  updatedAt: date().nullable()
+});
+```
+
+### dateString()
+
+Creates a field for ISO format date strings.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+
+```typescript
+const schema = createSchema("example", {
+  eventDate: dateString().required(),
+  lastModified: dateString().default(() => new Date().toISOString())
+});
+```
+
+### object()
+
+Creates a nested object field.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+
+```typescript
+const schema = createSchema("example", {
+  profile: object({
+    firstName: string(),
+    lastName: string(),
+    address: object({
+      street: string(),
+      city: string()
+    })
+  })
+});
+```
+
+### array()
+
+Creates an array field of a specified type.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+- `default(value)`: Sets a default value
+
+```typescript
+const schema = createSchema("example", {
+  tags: array(string()),
+  scores: array(number()).default([])
+});
+```
+
+### record()
+
+Creates a key-value map field where all values are of the same type.
+
+**Modifiers:**
+- `required()`: Makes the field required
+- `optional()`: Makes the field optional
+- `nullable()`: Allows null values
+
+```typescript
+const schema = createSchema("example", {
+  metadata: record(string()),
+  scores: record(number())
+});
+```
+
+### literal()
+
+Creates a field with fixed possible values.
+
+```typescript
+const schema = createSchema("example", {
+  role: literal("admin", "user", "guest"),
+  status: literal("active", "inactive")
+});
+```
+
+### taggedUnion()
+
+Creates a discriminated union field.
+
+```typescript
+const schema = createSchema("example", {
+  notification: taggedUnion({
+    email: object({
+      subject: string(),
+      body: string()
+    }),
+    sms: object({
+      phoneNumber: string(),
+      message: string()
+    })
+  })
+});
+```
+
+### union()
+
+Creates a union field without a discriminator.
+
+```typescript
+const schema = createSchema("example", {
+  content: union(
+    string(),
+    number(),
+    object({
+      text: string()
+    })
+  )
+});
+```
+
+### type()
+
+Creates a custom type with validation and transformation.
+
+```typescript
+const HexColor = type<string, string>((input) => {
+  if (!/^#[0-9A-Fa-f]{6}$/i.test(input)) {
+    throw new Error("Invalid hex color format");
+  }
+  return input;
+});
+
+const schema = createSchema("example", {
+  color: HexColor
+});
+```
+
+### pipe()
+
+Chains multiple types for sequential transformation.
+
+```typescript
+const schema = createSchema("example", {
+  count: pipe(
+    string(),
+    number()
+  )
+});
+```

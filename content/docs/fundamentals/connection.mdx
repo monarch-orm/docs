@@ -1,0 +1,116 @@
+---
+title: Connection
+---
+
+This guide explains how to connect to your MongoDB database using Monarch ORM. Proper database connection setup is essential for your application to interact with your data.
+
+## Core Concepts
+
+Monarch ORM uses the official MongoDB Node.js driver under the hood. You'll need to use the `createClient` and `createDatabase` functions to establish and manage the connection.
+
+## Connecting to MongoDB
+
+### 1. Import the necessary modules
+
+```typescript
+import { createClient, createDatabase } from "monarch-orm";
+import { createSchema, string } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  name: string(),
+});
+```
+
+### 2. Establish the MongoDB Client
+
+Use the `createClient` function to establish a connection to your MongoDB server.
+
+```typescript
+const client = createClient("mongodb://localhost:27017/your-db-name"); // Replace with your MongoDB URI
+```
+
+**Explanation:**
+
+*   `createClient(uri: string, options?: MongoClientOptions)`: Creates a new `MongoClient` instance.
+    *   **`uri` (required):**  The MongoDB connection string (URI). This specifies the location of your MongoDB server and any authentication credentials.
+    *   **`options` (optional):**  An object containing additional options for the MongoDB client (e.g., connection pooling settings, authentication options). See the MongoDB Node.js driver documentation for a full list of available options.
+
+**Example Connection URIs:**
+
+*   **Local MongoDB:** `"mongodb://localhost:27017/your-db-name"`
+*   **MongoDB Atlas (with username/password):** `"mongodb+srv://username:password@cluster-url/your-db-name?retryWrites=true&w=majority"`
+*   **Authentication Required (Local):** `"mongodb://username:password@localhost:27017/your-db-name"`
+
+### 3. Create the Database Instance
+
+Use the `createDatabase` function to create a database instance and associate your schemas with it.
+
+```typescript
+const { collections } = createDatabase(client.db(), {
+  users: UserSchema, // Pass your schemas here
+});
+```
+
+**Explanation:**
+
+*   `createDatabase(db: Db, schemas: object)`: Creates a database instance and associates it with specified schemas.
+    *   `db` (required): Instance of the MongoDB client's db you wish to use
+    *   **`schemas` (required):** An object where the keys are names for your collections and the values are schema definitions.
+
+### 4. Closing the Connection
+
+It's crucial to close the MongoDB connection when your application is finished using it to release resources.
+
+```typescript
+async function main() {
+  // ... your application logic ...
+  await client.close();
+}
+```
+
+## Complete Example
+
+```typescript
+import { createClient, createDatabase, createSchema, string } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  name: string(),
+});
+
+const client = createClient("mongodb://localhost:27017/your-db-name"); // Replace with your MongoDB URI
+
+async function main() {
+  try {
+    await client.connect();  // Explicitly connect
+
+    const { collections } = createDatabase(client.db(), {
+      users: UserSchema,
+    });
+
+    // Perform database operations...
+    const newUser = await collections.users.insertOne({ name: "Alice" }).exec();
+    console.log("Inserted User:", newUser);
+
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  } finally {
+    await client.close();
+    console.log("MongoDB connection closed.");
+  }
+}
+
+main();
+```
+
+## Connection Options (`MongoClientOptions`)
+
+The `createClient` function accepts an optional `MongoClientOptions` object to configure the connection. Some commonly used options include:
+
+*   **`useNewUrlParser`**:  (Deprecated - `true` by default in newer MongoDB drivers)  Enables the new URL parser.
+*   **`useUnifiedTopology`**: Enables the new unified topology layer.  Generally recommended.
+*   **`serverSelectionTimeoutMS`**: Specifies the timeout (in milliseconds) for selecting a server.
+*   **`heartbeatFrequencyMS`**: Specifies the frequency (in milliseconds) at which the driver sends heartbeats to the server.
+*   **`poolSize`**: Specifies the maximum number of connections in the connection pool.
+*   **`autoReconnect`**: (Deprecated) Enable or disable auto reconnection.
+
+Refer to the official MongoDB Node.js driver documentation for a comprehensive list of available options: [https://www.mongodb.com/docs/drivers/node/current/api/mongo

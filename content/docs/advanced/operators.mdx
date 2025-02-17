@@ -1,0 +1,228 @@
+---
+title: Operators
+---
+
+Monarch ORM provides a set of utility operators to simplify the construction of complex query filters. These operators are type-safe and designed to work seamlessly with your schema definitions. They offer a more concise and readable way to express common query conditions.
+
+## Available Operators
+
+### Logical Operators
+
+These operators combine multiple expressions to create more complex query logic.
+
+*   **`and(...expressions)`**: Returns documents that satisfy all the specified expressions.
+
+    ```typescript
+    import { and, eq, gt } from "monarch-orm/operators";
+
+    const users = await collections.users.find(
+      and(
+        { age: { $gt: 25 } },
+        { name: { $eq: "John" } }
+      )
+    ).exec();
+
+    // Equivalent MongoDB query:
+    // { $and: [ { age: { $gt: 25 } }, { name: { $eq: "John" } } ] }
+    ```
+
+*   **`or(...expressions)`**: Returns documents that satisfy at least one of the specified expressions.
+
+    ```typescript
+    import { or, eq } from "monarch-orm/operators";
+
+    const users = await collections.users.find(
+      or(
+        { name: eq("John") },
+        { name: eq("Jane") }
+      )
+    ).exec();
+
+    // Equivalent MongoDB query:
+    // { $or: [ { name: { $eq: "John" } }, { name: { $eq: "Jane" } } ] }
+    ```
+
+*   **`nor(...expressions)`**: Returns documents that fail to satisfy all the specified expressions.
+
+    ```typescript
+    import { nor, eq } from "monarch-orm/operators";
+
+    const users = await collections.users.find(
+      nor(
+        { age: { $lt: 18 } },
+        { isVerified: true }
+      )
+    ).exec();
+
+    // Equivalent MongoDB query:
+    // { $nor: [ { age: { $lt: 18 } }, { isVerified: true } ] }
+    ```
+
+### Comparison Operators
+
+These operators compare a field's value to a specified value.
+
+*   **`eq(value)`**: Matches values that are equal to the specified value.
+
+    ```typescript
+    import { eq } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      name: eq("Alice"),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { name: { $eq: "Alice" } }
+    ```
+
+*   **`neq(value)`**: Matches values that are not equal to the specified value.
+
+    ```typescript
+    import { neq } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: neq(30),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $ne: 30 } }
+    ```
+
+*   **`gt(value)`**: Matches values that are greater than the specified value.
+
+    ```typescript
+    import { gt } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: gt(25),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $gt: 25 } }
+    ```
+
+*   **`lt(value)`**: Matches values that are less than the specified value.
+
+    ```typescript
+    import { lt } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: lt(18),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $lt: 18 } }
+    ```
+
+*   **`gte(value)`**: Matches values that are greater than or equal to the specified value.
+
+    ```typescript
+    import { gte } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: gte(25),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $gte: 25 } }
+    ```
+
+*   **`lte(value)`**: Matches values that are less than or equal to the specified value.
+
+    ```typescript
+    import { lte } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: lte(18),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $lte: 18 } }
+    ```
+
+### Array Operators
+
+These operators check for membership within an array.
+
+*   **`inArray(values)`**: Matches any values that exist in the specified array.
+
+    ```typescript
+    import { inArray } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: inArray([20, 25, 30]),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $in: [ 20, 25, 30 ] } }
+    ```
+
+*   **`notInArray(values)`**: Matches any values that do not exist in the specified array.
+
+    ```typescript
+    import { notInArray } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      age: notInArray([20, 25, 30]),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { age: { $nin: [ 20, 25, 30 ] } }
+    ```
+
+### Existence Operators
+
+These operators check if a field exists in the document.
+
+*   **`exists()`**: Matches documents that contain the specified field.
+
+    ```typescript
+    import { exists } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      email: exists(),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { email: { $exists: true } }
+    ```
+
+*   **`notExists()`**: Matches documents that do not contain the specified field.
+
+    ```typescript
+    import { notExists } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      email: notExists(),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { email: { $exists: false } }
+    ```
+
+### Size Operator
+
+These operators check for array sizes in the document.
+
+*   **`size(value)`**: Matches documents where the array has the specified size.
+
+    ```typescript
+    import { size } from "monarch-orm/operators";
+
+    const users = await collections.users.find({
+      tags: size(5),
+    }).exec();
+
+    // Equivalent MongoDB query:
+    // { tags: { $size: 5 } }
+    ```
+
+## Usage Guidelines
+
+*   **Import Statements:** Make sure to import the operators from `"monarch-orm/operators"` or `"monarch-orm"` correctly.
+
+*   **Type Safety:** These operators are designed to work with your schema types. Using them with incorrect types might lead to TypeScript errors or unexpected behavior.
+
+*   **Readability:**  Using these operators can significantly improve the readability of your query filters.
+
+*   **Equivalence:**  For each Monarch ORM operator, the equivalent MongoDB query syntax is provided for clarity and reference.

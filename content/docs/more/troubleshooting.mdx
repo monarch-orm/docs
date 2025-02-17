@@ -1,0 +1,118 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when working with Monarch ORM, including connection problems, validation errors, and performance issues.
+---
+
+
+This guide provides solutions to common problems encountered while using Monarch ORM.
+
+## General Troubleshooting Tips
+
+*   **Check Your MongoDB Connection:** Ensure your MongoDB server is running and accessible from your application. Verify the connection URI in your code.
+*   **Review Schema Definitions:** Carefully review your schema definitions for typos, incorrect data types, or missing required fields.
+*   **Consult MongoDB Logs:** Check the MongoDB server logs for any errors or warnings related to your queries or operations.
+*   **Enable Debugging:** Turn on debugging or logging in your MongoDB driver to see the raw queries being sent to the server.
+*   **Refer to the Documentation:** This troubleshooting guide is a starting point. Always refer to the official Monarch ORM and MongoDB documentation for more in-depth information.
+
+## Common Problems and Solutions
+
+### MongoServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017
+
+**Problem:** Your application cannot connect to the MongoDB server.
+
+**Solutions:**
+
+*   **Verify MongoDB is Running:** Make sure your MongoDB server is running.  If it's a local installation, check that the `mongod` process is active.  If it's a cloud-based MongoDB instance, check its status in your cloud provider's console.
+*   **Check Connection URI:**  Double-check the connection URI in your `createClient` call.  Ensure the hostname, port, database name, username, and password are correct.
+
+    ```typescript
+    import { createClient } from "monarch-orm";
+
+    const client = createClient("mongodb://username:password@localhost:27017/your-db-name"); // Replace with your actual URI
+    ```
+*   **Firewall Issues:**  If MongoDB is running on a different machine or in a cloud environment, ensure that your firewall is configured to allow connections to the MongoDB port (default is 27017).
+
+### TypeError: Cannot read properties of undefined (reading 'propertyName')
+
+**Problem:**  Often occurs when trying to access a property of a document that doesn't exist or hasn't been properly populated.
+
+**Solutions:**
+
+*   **Verify Field Existence:** Check that the field you are trying to access exists in your schema and is actually present in the document. If the field is optional, ensure you handle the case where it might be `null` or `undefined`.
+*   **Check Population:**  If the field is a relation, make sure you have properly populated the relation using the `populate` method before accessing the related document.
+*   **Inspect the Document:**  Use `console.log` or a debugger to inspect the document and verify its structure and content.
+
+```typescript
+const user = await collections.users.findOne({ _id: userId }).populate({posts: true}).exec();
+
+if (user && user.posts) { // Check if user exists and the posts are populated
+  console.log(user.posts.title); // Avoid "Cannot read properties of undefined"
+}
+```
+
+### E11000 duplicate key error collection: your-db.users index: username_1 dup key: \{ username: \"someusername\" }
+
+**Problem:** You're trying to insert or update a document with a value that violates a unique index constraint.
+
+**Solutions:**
+
+*   **Examine the Schema:** Identify which field(s) have a unique index defined (either using `unique()` or `createIndex({ field: 1 }, { unique: true })`).
+*   **Check Data Duplicates:**  Before inserting or updating documents, verify that the values for the uniquely indexed fields are unique within the collection.
+*   **Handle the Error:** Implement proper error handling in your code to catch the "E11000" error and provide a user-friendly message.
+
+```typescript
+try {
+  await collections.users.insertOne({ username: "existinguser", email: "test@example.com" }).exec();
+} catch (error: any) {
+  if (error.code === 11000) {
+    console.error("Error: Username already exists.");
+  } else {
+    console.error("An unexpected error occurred:", error);
+  }
+}
+```
+
+### Slow Query Performance
+
+**Problem:** Queries are taking longer than expected.
+
+**Solutions:**
+
+*   **Analyze Query Performance:** Use `explain()` to see how MongoDb is executing the query
+
+```typescript
+const explain = await collections.users.find({age: {$gt: 18}}).raw().explain()
+
+console.log(explain)
+```
+
+*   **Add Indexes:** Ensure that you have appropriate indexes for the fields used in your queries (especially in `where` clauses and `sort` specifications).
+*   **Use Projections:** Retrieve only the fields you need to minimize data transfer.
+*   **Review Aggregation Pipelines:** If you're using the aggregation framework, optimize your pipeline stages. Avoid unnecessary stages, use efficient operators, and ensure that your data is properly indexed.
+
+### Unexpected Virtual Property Values
+
+**Problem:** A virtual property is not returning the expected value.
+
+**Solutions:**
+
+*   **Verify Input Fields:**  Make sure the input fields used in the virtual's calculation are correct and have the expected values.
+*   **Inspect the Output Function:**  Carefully review the code in your virtual's output function to ensure it is performing the intended calculation.
+*   **Check for Missing Relationships:** If your virtual relies on data from a relationship, verify that the relationship is correctly defined and populated.
+
+### Type Errors
+
+**Problem:** Incompatible types or type mismatches during development
+
+**Solutions:**
+
+*   **Inspect type definitions:** Use type inspection tools to ensure the types are what you expect.
+*   **Check the type modifiers**: Verify you've set the correct type modifiers, such as nullable, optional, default, or the usage of any transformations.
+
+## Getting Help
+
+If you are unable to resolve your issue using this troubleshooting guide, consider:
+
+*   **Creating a minimal, reproducible example:** This will help others understand the problem and provide assistance.
+*   **Checking existing issues:** Review the existing issues on the [Monarch ORM GitHub repository](https://github.com/princecodes247/monarch/issues).
+*   **Opening a new issue:** If you cannot find a solution, create a new issue on the GitHub repository with a detailed description of the problem, code samples, and any relevant error messages.

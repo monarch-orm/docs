@@ -1,0 +1,132 @@
+---
+title: Virtuals
+---
+
+Virtuals allow you to define properties that are *not* directly stored in the database but are computed on the fly based on other fields.
+This is useful for creating derived data or computed values without modifying your schema or increasing storage costs.
+
+## Benefits of Using Virtuals
+
+*   **Derived Data:** Calculate properties based on existing data (e.g., `fullName` from `firstName` and `lastName`).
+*   **Dynamic Values:** Generate values that can change over time or based on external factors.
+*   **Simplified Data Access:**  Provide a single point of access for complex data transformations.
+*   **Schema Integrity:** Avoid storing redundant data in your database.
+
+## Defining Virtuals
+
+You define virtual properties within your schema using the `virtual` function, chained onto your schema object with the `virtuals()` method.
+
+```typescript
+import { createSchema, string, number, virtual } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+    firstName: string(),
+    lastName: string(),
+    age: number(),
+    isActive: boolean(),
+  }).virtuals({
+    fullName: virtual(["firstName", "lastName"], ({ firstName, lastName }) => `${firstName} ${lastName}`),
+    greeting: virtual("firstName", ({firstName}) => `Hello, ${firstName}!`),
+    ageGroup: virtual("age", ({age}) => {
+      if (age < 18) return "minor";
+      else if (age < 65) return "adult";
+      return "senior";
+    })
+  });
+```
+
+**Explanation:**
+
+*   **`virtuals({...})`**: Call this on your schema to define one or more virtuals. Takes an object where keys are names of your virtuals and values are calls to the `virtual` function.
+*   **`virtual(input, output)`**:  Creates a new virtual property. It takes two arguments:
+    *   **`input`:**  An array of field names that the virtual depends on. These fields are the inputs to your virtual function.The virtual will automatically recompute when any of these fields change,
+        *   `input` can also be single string field name to depend on just one property
+    *   **`output`:** A function that computes the virtual property's value. It receives an object containing the values of the dependent fields. These values can be deconstructed.
+
+## Accessing Virtuals
+
+Virtual properties can be accessed directly from documents retrieved from the database.
+
+```typescript
+import { createClient, createDatabase, createSchema, string, number, virtual, boolean } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+    firstName: string(),
+    lastName: string(),
+    age: number(),
+    isActive: boolean(),
+  }).virtuals({
+    fullName: virtual(["firstName", "lastName"], ({ firstName, lastName }) => `${firstName} ${lastName}`),
+    greeting: virtual("firstName", ({firstName}) => `Hello, ${firstName}!`),
+    ageGroup: virtual("age", ({age}) => {
+      if (age < 18) return "minor";
+      else if (age < 65) return "adult";
+      return "senior";
+    })
+  });
+
+const client = createClient("mongodb://localhost:27017/your-db-name");
+const { collections } = createDatabase(client.db(), { users: UserSchema });
+
+async function example() {
+    const user = await collections.users.insertOne({ firstName: "John", lastName: "Doe", age: 30, isActive: true }).exec();
+    const retrievedUser = await collections.users.findOne({ _id: user._id }).exec();
+
+    console.log(retrievedUser);
+    // Expected Output:
+    // {
+    //   _id: ObjectId("..."),
+    //   firstName: "John",
+    //   lastName: "Doe",
+    //   age: 30,
+    //   isActive: true,
+    //   fullName: "John Doe",
+    //   greeting: "Hello, John!",
+    //   ageGroup: "adult"
+    // }
+}
+```
+
+## Projections with Virtuals
+
+When using projections (select or omit) in your queries, keep the following in mind:
+
+*   **`select`**: If you use `select`, you must explicitly select the virtual property to include it in the results.
+*   **`omit`**: If you use `omit`, the virtual property will be included by default unless you explicitly omit it.
+
+```typescript
+const selectedUser = await collections.users
+  .findOne({ _id: someUserId })
+  .select({ firstName: true, fullName: true }) // Explicitly select fullName
+  .exec();
+
+const omittedUser = await collections.users
+  .findOne({ _id: someUserId })
+  .omit({ lastName: true }) //Omit lastName and use all other properties
+  .exec();
+```
+
+## Accessing Omitted Properties in Virtuals
+
+Virtuals can still access fields that have been omitted from the query using `omit`.  The value will be accessed from the underlying document before it is omitted for the query results.
+
+```typescript
+import { createSchema, string, number, boolean, virtual } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+    firstName: string(),
+    lastName: string(),
+    age: number(),
+    isAdmin: boolean(),
+  }).virtuals({
+    role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
+  }).omit({ isAdmin: true });
+```
+
+## Important Considerations
+
+*   **Performance:** Virtuals are computed on-the-fly, so complex computations can impact performance. Consider caching the results of expensive virtuals if needed.
+*   **Data Integrity:** Ensure that the input fields used in your virtuals are reliable and consistent.
+*   **Testability:** Write unit tests for your virtuals to ensure they are computing the correct values.
+
+Virtuals provide a flexible and powerful way to manage derived data in Monarch ORM. By understanding how to define, access, and project virtuals, you can create more maintainable and efficient data models.

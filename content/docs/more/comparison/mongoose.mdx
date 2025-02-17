@@ -1,0 +1,179 @@
+---
+title: Mongoose
+description: Comparing Monarch with Mongoose
+---
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+This page compares the Monarch ORM and Mongoose APIs. If you want to learn how to migrate from Mongoose to Monarch, check out this guide.
+
+
+## Schema Definition
+
+**Monarch ORM**
+
+Monarch ORM uses a functional approach to define schemas.
+
+```typescript
+import { boolean, createSchema, number, string } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  name: string().nullable(),
+  email: string().lowercase().optional(),
+  age: number().optional().default(10),
+  isVerified: boolean(),
+});
+```
+
+**Mongoose** 
+
+Mongoose uses a class-based approach to define schemas.
+
+```javascript
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const userSchema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, lowercase: true, required: true },
+  age: { type: Number, default: 10 },
+  isVerified: { type: Boolean, default: false }
+});
+```
+
+
+## Connecting to the Database
+
+**Monarch ORM**
+
+<Tabs items={['createClient', 'External']}>
+<Tab value="createClient" label="createClient">
+```typescript
+import { createDatabase, createClient } from "monarch-orm";
+
+const client = createClient("mongodb://localhost:27017");
+const { collections } = createDatabase(client, {
+  users: UserSchema,
+});
+```
+</Tab>
+<Tab value="external" label="External">
+```typescript
+import { createDatabase } from "monarch-orm";
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient("mongodb://localhost:27017");
+const { collections } = createDatabase(client, {
+  users: UserSchema,
+});
+```
+</Tab>
+</Tabs>
+
+**Mongoose**
+
+```javascript
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/mydatabase', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+```
+
+## Inserting Documents
+
+**Monarch ORM**
+
+```typescript
+const newUser = await collections.users
+  .insert()
+  .values({
+    name: "Alice",
+    email: "alice@example.com",
+    age: 25,
+    isVerified: true,
+  })
+  .exec();
+  ```
+
+**Mongoose**
+
+```javascript
+const User = mongoose.model('User', userSchema);
+
+const newUser = new User({
+  name: "Alice",
+  email: "alice@example.com",
+  age: 25,
+  isVerified: true
+});
+
+await newUser.save();
+```
+
+
+## Querying Documents
+
+**Monarch ORM**
+
+
+<Tabs items={['Direct', 'Using Where']}>
+<Tab value="direct" label="Direct">
+```typescript
+const users = await collections.users.find({ name: "Alice" }).exec();
+console.log(users);
+```
+</Tab>
+<Tab value="using-where" label="Using Where">
+```typescript
+const users = await collections.users.find().where({ name: "Alice" }).exec();
+console.log(users);
+```
+</Tab>
+</Tabs>
+
+
+**Mongoose**
+
+```javascript
+const users = await User.find({});
+console.log(users);
+```
+
+## Updating Documents
+
+**Monarch ORM**
+
+```typescript
+const updatedUser = await collections.users
+  .updateOne()
+  .set({ email: "alice.updated@example.com" })
+  .where({ name: "Alice" })
+  .exec();
+  ```
+
+**Mongoose**
+
+```javascript
+const updatedUser = await User.updateOne(
+  { name: "Alice" },
+  { email: "alice.updated@example.com" }
+);
+```
+
+## Deleting Documents
+
+**Monarch ORM**
+
+```typescript
+const deletedUser = await collections.users
+  .deleteOne()
+  .where({ name: "Alice" })
+  .exec();
+  ```
+
+**Mongoose**
+
+```javascript
+const deletedUser = await User.deleteOne({ name: "Alice" });
+```

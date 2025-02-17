@@ -1,0 +1,122 @@
+---
+title: Best Practices
+description: Learn the best practices for using Monarch ORM effectively, including optimization techniques, security considerations, and recommended patterns. Following these guidelines can help you write cleaner, more maintainable, and performant code.
+---
+
+## 1. Schema Design
+
+*   **Define schemas carefully:**  Spend time designing your schemas to accurately represent your data models. Consider relationships between entities and how you will query your data.
+*   **Use appropriate types:** Select the most appropriate data types for each field to ensure data integrity and type safety. Leverage features like `string().lowercase()` and `number().default()` to enforce data constraints directly in your schema.
+*   **Utilize schema modifiers:** Use `nullable()`, `optional()`, and `default()` to clearly define field behavior and reduce boilerplate code in your application logic.
+*   **Consider Indexes early:** Plan your indexes while defining the schema and leverage compound indexes effectively.
+
+```typescript
+import { createSchema, string, number, boolean } from "monarch-orm";
+
+// Good Schema Design
+const ProductSchema = createSchema("products", {
+    name: string().required(),
+    description: string().optional(),
+    price: number().required(),
+    isActive: boolean().default(true)
+    // Add Indexing early, rather than as needed down the line
+}).indexes(({ createIndex, unique }) => ({
+    nameIndex: unique("name"),
+    priceIndex: createIndex({ price: 1 }),
+}));
+```
+
+## 2. Data Validation
+
+*   **Rely on schema validation:** Monarch ORM enforces your schema, reducing the risk of runtime errors caused by invalid data. Make use of this as your first line of defense.
+*   **Leverage transformations:** Use `.lowercase()`, `.uppercase()`, `.trim()`, and other transformation methods to automatically sanitize data before it is stored in the database.
+
+```typescript
+import { createSchema, string } from "monarch-orm";
+
+const UserSchema = createSchema("users", {
+  email: string().lowercase().required(), // Email will always be lowercase
+  username: string().trim().required(), // Username will have leading and trailing spaces removed
+});
+```
+
+## 3. Querying for data
+
+*   **Use projections (`select` and `omit`):**  Retrieve only the fields you need to minimize data transfer and improve query performance.
+*   **Paginate large result sets:** Implement pagination to avoid loading excessive amounts of data into memory.
+*   **Leverage Aggregation Framework when needed:** Use MongoDB's aggregation framework for complex data transformations and calculations.
+*   **Consider Indexes**: Ensure you have appropriate indexes for frequent queries
+
+```typescript
+//Efficient select query
+const users = await collections.users.find().select({name: true, email: true}).limit(50).skip(100).exec()
+
+//Avoid pulling large amounts of data into memory
+const count = await collections.users.aggregate().addStage({$count: "count"}).exec()
+
+//Consider adding this index
+//UserSchema.indexes(({ createIndex, unique }) => ({
+//  nameIndex: createIndex({email: 1})
+//}))
+```
+
+## 4. Relationships and Population
+
+*   **Define relationships carefully:** Clearly define relationships between schemas using `one`, `many`, and `ref`.
+*   **Use Population Strategically:** Population can be expensive. Only populate relationships when necessary.
+*   **Use Population Options:** Use population options (`select`, `omit`, `limit`, `skip`, `sort`) to optimize the population process.
+
+```typescript
+const userWithPosts = await collections.users
+    .findOne({ _id: userId })
+    .populate({
+        posts: {
+            limit: 10,
+            select: { title: true },
+            sort: { createdAt: -1 }
+        }
+    })
+    .exec();
+```
+
+*   **Cache Frequent Data:** For very common related document values, consider caching the results of population to minimize database load.
+
+## 5. Performance Optimization
+
+*   **Use indexes:** Properly configured indexes are crucial for query performance.
+*   **Profile your queries:**  Use MongoDB's profiling tools to identify slow queries and optimize them.
+*   **Monitor database performance:** Regularly monitor your MongoDB server to ensure it is running smoothly and to identify any performance bottlenecks.
+*   **Leverage connection pooling:**  Monarch ORM relies on the underlying MongoDB driver for connection pooling.  Ensure that your driver is configured correctly to reuse connections efficiently.
+*   **Use BSON options**: Set the correct `BSONOptions` for high throughput or low latency for large or sensitive requests.
+
+## 6. Error Handling
+
+*   **Handle exceptions gracefully:** Wrap your database operations in `try...catch` blocks to handle potential errors.
+*   **Use logging:** Log errors and warnings to help you diagnose and resolve issues.
+*   **Implement retry logic:** For transient errors, consider implementing retry logic to improve resilience.
+
+## 7. Code Organization and Maintainability
+
+*   **Separate schema definitions:** Define your schemas in separate files for better organization.
+*   **Use dependency injection:** Inject your database client and collections into your application components to improve testability and flexibility.
+*   **Follow a consistent coding style:**  Adhere to a consistent coding style throughout your project to improve readability and maintainability.
+*    **Use a Linter and Formatter**: Use a style guide to improve readability. Monarch orm ships with [biomejs](https://biomejs.dev/) for code formatting.
+*   **Write tests:** Thoroughly test your data access code to ensure it is working correctly.
+
+## Example Project Structure
+
+```
+src/
+├── models/
+│   ├── User.ts       # User schema definition
+│   ├── Post.ts       # Post schema definition
+│   └── index.ts      # Exports all schema definitions
+├── services/
+│   ├── UserService.ts  # User-related data access logic
+│   └── PostService.ts  # Post-related data access logic
+├── config/
+│   └── database.ts   # Database connection configuration
+└── index.ts          # Main application entry point
+```
+
+By following these best practices, you can build robust, scalable, and maintainable applications with Monarch ORM and MongoDB.
