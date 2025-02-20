@@ -1,10 +1,6 @@
-
-// import { IconGithub } from "components/icons";
 import { ChevronRight } from "lucide-react";
 import LinkItem from "@/components/ui/link-item";
-import BgGradient from "@/components/ui/bg-gradient";
 import HeroAnimated from "@/components/hero-animated";
-import HeroBg2 from "./hero-bg2";
 import HeroBg from "./hero-bg";
 
 export default function Hero() {

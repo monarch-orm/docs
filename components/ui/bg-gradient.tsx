@@ -1,4 +1,4 @@
-export default () => (
+const BGGradient = () => (
     <div
       className='absolute inset-0 max-w-lg m-auto h-[27rem] sm:h-64 sm:max-w-7xl'
       style={{
@@ -7,3 +7,5 @@ export default () => (
         filter: "blur(118px)",
       }}></div>
   );
+
+export default BGGradient;

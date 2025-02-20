@@ -1,9 +1,6 @@
-import Link from 'next/link';
 import Hero from './_components/hero';
-import Hero2 from './_components/hero2';
-import SectionHeader from './_components/section-header';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Code, Cpu, Database, Rocket, Shield, Sparkles, Zap } from 'lucide-react';
+import { ChevronRight, Code, Database, Rocket, Shield, Sparkles, Zap } from 'lucide-react';
 import FeatureCard from './_components/feature-card';
 import ComparisonRow from './_components/comparison-row';
 import AnimatedCodeSnippet from './_components/animated-code-snippet';
@@ -204,7 +201,7 @@ Community Slack/Discord
         <div className="relative z-10 text-center">
           <h2 className="section-header tracking-tight text-5xl">Ready to Build Faster?</h2>
           <p className="text-xl mb-12 text-muted-foreground max-w-2xl mx-auto">
-            Try our ORM today and experience the difference. Whether you're migrating from another tool or starting fresh, you'll love the simplicity and speed.
+            Try our ORM today and experience the difference. Whether you&apos;re migrating from another tool or starting fresh, you&apos;ll love the simplicity and speed.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="min-w-[200px]">

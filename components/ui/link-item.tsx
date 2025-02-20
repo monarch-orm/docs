@@ -11,7 +11,7 @@ interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
   variant?: "default" | "shiny";
 }
 
-export default ({
+const LinkItem = ({
   children,
   href,
   className = "",
@@ -28,3 +28,5 @@ export default ({
     {children}
   </Link>
 );
+
+export default LinkItem;
