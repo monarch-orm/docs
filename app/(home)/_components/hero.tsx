@@ -38,7 +38,7 @@ export default function Hero() {
                 <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 duration-300" />
               </LinkItem>
               {/* <LinkItem
-                href="https://github.com/princecodes247/monarch"
+                href={externalLinks.github}
                 variant="shiny"
                 className="inline-flex font-mono uppercase tracking-tight rounded-none w-full justify-center items-center gap-x-3 border border-zinc-800 hover:border-zinc-600 bg-zinc-950 hover:text-zinc-100 duration-200 sm:w-auto py-6 px-10"
                 target="_blank"

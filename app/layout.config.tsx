@@ -1,3 +1,4 @@
+import { externalLinks } from '@/lib/constants';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 /**
@@ -9,7 +10,7 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
  */
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    title: 'Monarch ORM',
+    title: 'MonarchORM',
   },
   links: [
     {
@@ -18,4 +19,6 @@ export const baseOptions: BaseLayoutProps = {
       active: 'nested-url',
     },
   ],
+  disableThemeSwitch: true,
+  githubUrl: externalLinks.github
 };

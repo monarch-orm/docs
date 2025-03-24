@@ -73,7 +73,7 @@
   }
   
   .neon-text {
-    text-shadow: 0 0 5px theme('colors.accent.DEFAULT'), 0 0 10px theme('colors.accent.DEFAULT');
+    text-shadow: 0 0 5px theme('colors.monarch.purple'), 0 0 10px theme('colors.monarch.blue');
   }
   
   .section-header {
@@ -88,13 +88,63 @@
 }
 
 .feature-icon-wrapper {
-  @apply mb-3 p-4 rounded-full bg-primary/10 text-primary;
-  @apply transition-all duration-300 group-hover:bg-accent group-hover:text-white;
+  @apply mb-3 p-4 rounded-full bg-gradient-to-r from-primary/10 to-primary/10 text-primary;
+  @apply transition-all duration-1000 group-hover:from-monarch-purple group-hover:to-monarch-blue group-hover:text-white;
 }
 
   
   .glow {
     box-shadow: 0 0 10px theme('colors.primary.DEFAULT');
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full transition-colors hover:bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-background/80 backdrop-blur-md border border-border/50 shadow-sm;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-hero-gradient;
+  }
+  
+  .code-block {
+    @apply font-mono text-sm rounded-md p-4 bg-muted overflow-auto;
+  }
+  
+  .button-glow {
+    @apply relative inline-flex items-center justify-center overflow-hidden transition-all duration-300;
+  }
+  
+  .button-glow:after {
+    @apply content-[''] absolute inset-0 -z-10 bg-gradient-to-r from-monarch-purple to-monarch-blue opacity-0 transition-opacity duration-300 blur-xl;
+  }
+  
+  .button-glow:hover:after {
+    @apply opacity-70;
+  }
+  
+  .nav-item {
+    @apply px-4 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors;
+  }
+  
+  .nav-item-active {
+    @apply text-foreground bg-muted/50;
+  }
+
+  .feature-card {
+    @apply glass-card p-6 rounded-lg transition-all duration-300 hover:shadow-glow-sm;
   }
 }
 

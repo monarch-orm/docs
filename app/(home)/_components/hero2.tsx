@@ -1,59 +1,80 @@
-import { ChevronRight } from "lucide-react";
-import LinkItem from "@/components/ui/link-item";
-import HeroAnimated from "@/components/hero-animated";
-import HeroBg from "./hero-bg";
 
-export default function Hero2() {
+import { ArrowRight, Github } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CodePreview } from "./code-preview";
+import Link from "next/link";
+import { externalLinks } from "@/lib/constants";
+
+const codeExample = `import { createSchema, createClient, createDatabase, string, number, createdAt } from 'monarch-orm';
+
+// Define your schema with full type safety
+const users = createSchema('users', {
+  name: string(),
+  email: string(),
+  age: number(),
+  createdAt: createdAt()
+});
+
+// Create a client and connect to your MongoDB database
+const client = createClient('mongodb://localhost:27017/my-database');
+const { collections } = createDatabase(client, { users });
+
+// Query with type-safe methods
+const users = await collections.users
+  .find({ age: { $gte: 21 } })
+  .sort({ createdAt: -1 })
+  .limit(10);
+`;
+
+export default function Hero() {
   return (
-    <>
-      <section className=" section min-h-[800px] w-full flex flex-col md:flex-row items-center  mt-0 relative">
-       <HeroBg/>
+    <section className="relative pt-32 pb-20 overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 -z-10 bg-hero-glow opacity-30"></div>
+      <div className="absolute inset-x-0 top-0 -z-10 transform-gpu overflow-hidden blur-3xl">
+        <div 
+          className="relative aspect-[1155/678] w-[72.1875rem] -translate-x-1/2 bg-gradient-to-tr from-monarch-purple to-monarch-blue opacity-20"
+          style={{
+            left: "calc(50% + 3rem)",
+            clipPath: "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
+          }}
+        />
+      </div>
 
-          <div className="relative z-10 max-w-4xl md:-translate-y-[33%]  mr-auto  space-y-4">
-            <h1 className="text-sm  text-gray-400 group font-geist mr-auto px-5 py-2 bg-gradient-to-tr from-zinc-300/5 via-gray-400/5 to-transparent  border-[2px] border-white/5 rounded-3xl w-fit">
-              <pre className="tracking-tight uppercase">
-                Building Monarch Studio
-                <ChevronRight className="inline w-4 h-4 ml-2 group-hover:translate-x-1 duration-300" />
-              </pre>
+      <div className="container relative z-10">
+        <div className="flex flex-col lg:flex-row gap-12 items-center">
+          <div className="flex-1 text-center lg:text-left max-w-xl">
+            <div className="inline-block px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm font-medium mb-6 animate-fade-in opacity-0" style={{ animationDelay: "100ms" }}>
+              Type-safe MongoDB ODM for TypeScript
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in opacity-0" style={{ animationDelay: "200ms" }}>
+              <span className="text-gradient">Monarch</span>ORM
             </h1>
-            <HeroAnimated
-              header="More Performance in less code"
-              headerClassName="ml-2 text-left tracking-tight max-w-md md:max-w-3xl text-3xl md:text-4xl tracking-tighter mr-auto lg:text-6xl font-bold font-geist  font-normal  text-transparent bg-clip-text bg-black dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] leading-0 md:leading-0 md:pb-0 mt-1"
-              description=""
-              descriptionClassName="  "
-            >
-              <div className="mr-auto text-[0.84rem] ml-2 text-zinc-400 text-left md:text-lg lg:max-w-2xl md:py-5">
-                <pre className="tracking-tight uppercase max-w-md md:max-w-3xl text-wrap">
-                  Use MongoDB without losing the type safety we all love.
-                Experience the perfect balance of speed, type safety, and flexibility.
-                </pre>
-              </div>
-            </HeroAnimated>
-            <div className="mr-auto ml-2  flex flex-wrap gap-y-4 items-start justify-start gap-x-3">
-              <LinkItem
-                href="/docs"
-                className="inline-flex rounded-none uppercase font-mono text-white  text-center group items-center w-full justify-center bg-background  border-input border-[1px] hover:bg-white/10 transition-colors sm:w-auto py-6 px-10"
-              >
-                Get Started
-                <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 duration-300" />
-              </LinkItem>
-              {/* <LinkItem
-                href="https://github.com/princecodes247/monarch"
-                variant="shiny"
-                className="inline-flex font-mono uppercase tracking-tight rounded-none w-full justify-center items-center gap-x-3 border border-zinc-800 hover:border-zinc-600 bg-zinc-950 hover:text-zinc-100 duration-200 sm:w-auto py-6 px-10"
-                target="_blank"
-              >
-                View Documentation
-              </LinkItem> */}
+            <p className="text-xl text-muted-foreground mb-8 animate-fade-in opacity-0" style={{ animationDelay: "300ms" }}>
+              {/* Elegant, type-safe MongoDB object modeling for TypeScript developers. 
+              Inspired by Prisma and Drizzle, designed for MongoDB. */}
+              Use MongoDB without losing the type safety we all love.
+              Experience the perfect balance of speed, type safety, and flexibility.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center lg:justify-start animate-fade-in opacity-0" style={{ animationDelay: "400ms" }}>
+              <Button size="lg" className="button-glow gap-2">
+                Get Started <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Link href={externalLinks.github}>
+              <Button size="lg" variant="outline" className="gap-2">
+                <Github className="h-4 w-4" /> View on GitHub
+              </Button>
+              </Link>
             </div>
           </div>
- 
-
-      </section>
-
-    </>
+          <div className="flex-1 w-full max-w-xl lg:max-w-none animate-fade-in opacity-0" style={{ animationDelay: "500ms" }}>
+            <CodePreview 
+              code={codeExample} 
+              title="models/user.ts"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
   );
-};
-
-
-
+}
